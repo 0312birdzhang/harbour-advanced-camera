@@ -24,6 +24,10 @@ Page {
         color: "black"
     }
 
+    FSOperations {
+        id: fsOperations
+    }
+
     VideoOutput {
         id: captureView
         anchors.fill: parent
@@ -67,7 +71,6 @@ Page {
 
         videoRecorder {
             resolution: Qt.size(1920, 1080)
-            outputLocation: "/home/nemo/"
             audioSampleRate: 48000
             audioBitRate: 96
             audioChannels: 1
@@ -137,6 +140,7 @@ Page {
                 if (camera.videoRecorder.recorderStatus == CameraRecorder.RecordingStatus) {
                     camera.videoRecorder.stop();
                 } else {
+                    camera.videoRecorder.outputLocation = fsOperations.writableLocation("movies") + "/AdvancedCam/VID_" + formatDate(new Date()) + ".mkv";
                     camera.videoRecorder.record();
                 }
             }
@@ -208,6 +212,8 @@ Page {
 
     Component.onCompleted: {
         _completed = true;
+        fsOperations.createFolder(fsOperations.writableLocation("pictures") + "/AdvancedCam/");
+        fsOperations.createFolder(fsOperations.writableLocation("movies") + "/AdvancedCam/");
     }
 
     Timer {
@@ -371,5 +377,23 @@ Page {
                 return "image://theme/icon-camera-video-shutter-on";
             }
         }
+    }
+
+    function formatDate(date) {
+        var d = new Date(date),
+            month = '' + (d.getMonth() + 1),
+            day = '' + d.getDate(),
+            year = d.getFullYear(),
+            hour = d.getHours(),
+            minutes = d.getMinutes(),
+            seconds = d.getSeconds();
+
+        if (month.length < 2) month = '0' + month;
+        if (day.length < 2) day = '0' + day;
+        if (hour.length < 2) hour = '0' + hour;
+        if (minutes.length < 2) minutes = '0' + minutes;
+        if (seconds.length < 2) seconds = '0' + seconds;
+
+        return year + month + day + '_' + hour + minutes + seconds;
     }
 }
