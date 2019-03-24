@@ -39,7 +39,8 @@ DISTFILES += rpm/harbour-advanced-camera.changes.in \
     qml/pages/CameraUI.qml \
     qml/pages/GalleryUI.qml \
     qml/pages/Settings.qml \
-    qml/pages/SettingsOverlay.qml
+    qml/pages/SettingsOverlay.qml \
+    qml/components/IconSwitch.qml
 
 SAILFISHAPP_ICONS = 86x86 108x108 128x128 172x172
 

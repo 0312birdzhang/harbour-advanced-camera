@@ -1,6 +1,6 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
-import QtMultimedia 5.4
+import QtMultimedia 5.6
 import uk.co.piggz.harbour_advanced_camera 1.0
 import "../components/"
 
@@ -15,6 +15,7 @@ Page {
     property bool _completed: false
     property bool _focusAndSnap: false
     property bool _parametersLoaded: false
+    property bool _recordingVideo: false
 
     Rectangle {
         parent: window
@@ -38,8 +39,8 @@ Page {
         id: camera
 
         cameraState: page._completed && !page._cameraReload
-                        ? Camera.ActiveState
-                        : Camera.UnloadedState
+                     ? Camera.ActiveState
+                     : Camera.UnloadedState
 
         imageProcessing.colorFilter: CameraImageProcessing.ColorFilterNone
 
@@ -63,8 +64,27 @@ Page {
                 camera.viewfinder.resolution = getNearestViewFinderResolution();
             }
         }
+
+        videoRecorder {
+            resolution: Qt.size(1920, 1080)
+            outputLocation: "/home/nemo/"
+            audioSampleRate: 48000
+            audioBitRate: 96
+            audioChannels: 1
+            audioCodec: "audio/mpeg, mpegversion=(int)4"
+            frameRate: 30
+            videoCodec: "video/x-h264"
+            mediaContainer: "video/x-matroska"
+
+            onRecorderStateChanged: {
+                if (camera.videoRecorder.recorderState == CameraRecorder.StoppedState) {
+                    console.log("saved to: " + camera.videoRecorder.outputLocation)
+                }
+            }
+        }
+
         onLockStatusChanged: {
-            if (camera.lockStatus == Camera.Locked && _focusAndSnap) {
+            if (camera.lockStatus == Camera.Locked && _focusAndSnap && !_recordingVideo) {
                 camera.imageCapture.capture();
                 animFlash.start();
                 _focusAndSnap = false;
@@ -102,15 +122,23 @@ Page {
 
         size: Theme.itemSizeLarge
 
-        image: "image://theme/icon-camera-shutter"
+        image: shutterIcon()
         icon.anchors.margins: Theme.paddingSmall
         onClicked: {
-            if (camera.focus.focusMode == Camera.FocusAuto || camera.focus.focusMode == Camera.FocusMacro || camera.focus.focusMode == Camera.FocusContinuous) {
-                _focusAndSnap = true;
-                camera.searchAndLock();
+            if (camera.captureMode == Camera.CaptureStillImage) {
+                if (camera.focus.focusMode == Camera.FocusAuto || camera.focus.focusMode == Camera.FocusMacro || camera.focus.focusMode == Camera.FocusContinuous) {
+                    _focusAndSnap = true;
+                    camera.searchAndLock();
+                } else {
+                    camera.imageCapture.capture();
+                    animFlash.start();
+                }
             } else {
-                camera.imageCapture.capture();
-                animFlash.start();
+                if (camera.videoRecorder.recorderStatus == CameraRecorder.RecordingStatus) {
+                    camera.videoRecorder.stop();
+                } else {
+                    camera.videoRecorder.record();
+                }
             }
         }
     }
@@ -189,7 +217,7 @@ Page {
         onTriggered: {
             page._cameraReload = false;
         }
-     }
+    }
 
     function applySettings() {
         camera.imageProcessing.setColorFilter(settings.mode.effect);
@@ -265,7 +293,7 @@ Page {
         visible: galleryModel.count > 0
         enabled: visible
 
-        anchors.bottom: parent.bottom
+        anchors.top: btnCameraSwitch.bottom
         anchors.bottomMargin: Theme.paddingMedium
         anchors.right: parent.right
         anchors.rightMargin: Theme.paddingMedium
@@ -298,6 +326,30 @@ Page {
         }
     }
 
+    IconSwitch {
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: Theme.paddingMedium
+        anchors.right: parent.right
+        anchors.rightMargin: Theme.paddingMedium
+
+        width: Theme.itemSizeSmall
+
+        icon1Source: "image://theme/icon-camera-camera-mode"
+        icon2Source: "image://theme/icon-camera-video"
+        button1Name: "still"
+        button2Name: "video"
+
+        onClicked: {
+            console.log("selected:", name);
+
+            if (name === button1Name) {
+                camera.captureMode = Camera.CaptureStillImage;
+            } else {
+                camera.captureMode = Camera.CaptureVideo;
+            }
+        }
+    }
+
     function focusColor() {
         if (camera.lockStatus == Camera.Unlocked) {
             return Theme.highlightColor;
@@ -305,6 +357,18 @@ Page {
             return Theme.secondaryColor;
         } else {
             return Theme.primaryColor;
+        }
+    }
+
+    function shutterIcon() {
+        if (camera.captureMode == Camera.CaptureStillImage) {
+            return "image://theme/icon-camera-shutter"
+        } else {
+            if (camera.videoRecorder.recorderStatus == CameraRecorder.RecordingStatus) {
+                return "image://theme/icon-camera-video-shutter-off";
+            } else {
+                return "image://theme/icon-camera-video-shutter-on";
+            }
         }
     }
 }
