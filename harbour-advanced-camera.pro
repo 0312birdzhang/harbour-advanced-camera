@@ -20,6 +20,7 @@ SOURCES += src/harbour-advanced-camera.cpp \
     src/effectsmodel.cpp \
     src/exposuremodel.cpp \
     src/isomodel.cpp \
+    src/motorhelper.cpp \
     src/resolutionmodel.cpp \
     src/wbmodel.cpp \
     src/focusmodel.cpp \
@@ -66,6 +67,7 @@ HEADERS += \
     src/effectsmodel.h \
     src/exposuremodel.h \
     src/isomodel.h \
+    src/motorhelper.h \
     src/resolutionmodel.h \
     src/wbmodel.h \
     src/focusmodel.h \
@@ -74,4 +76,5 @@ HEADERS += \
     src/resourcehandler.h \
     src/storagemodel.h
 
+PKGCONFIG += android-headers libhardware
 LIBS += -ldl

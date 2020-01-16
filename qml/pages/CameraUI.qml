@@ -95,6 +95,10 @@ Page {
         }
     }
 
+    MotorHelper{
+        id: motorHelper
+    }
+
     Camera {
         id: camera
 
@@ -119,6 +123,18 @@ Page {
         }
 
         flash.mode: Camera.FlashOff
+
+        onDeviceIdChanged: {
+            if(motorHelper.hasMotor){
+                if(camera.deviceId === "secondary"){
+                    // call popup
+                    motorHelper.popUpMotor();
+                }else{
+                    // call takeback
+                    motorHelper.takeBackMotor();
+                }
+            }
+        }
 
         imageCapture {
             onImageCaptured: {
@@ -543,6 +559,7 @@ Page {
         camera.deviceId = settings.global.cameraId
         _completed = true
     }
+
 
     Connections {
         target: window
